@@ -26,12 +26,18 @@ of included script samples are subject to the terms specified
 at http://www.microsoft.com/info/cpyright.htm.
 #>
 
-$ClientID       = "" # Should be a ~35 character string insert your info here
-$ClientSecret   = "" # Should be a ~44 character string insert your info here
+#$ClientID       = "" # Should be a ~35 character string insert your info here
+#$ClientSecret   = "" # Should be a ~44 character string insert your info here
 $loginURL       = "https://login.microsoftonline.com/"
-$tenantdomain   = ""
-$tenantId       = ""
 $resource       = "https://manage.office.com"
+
+# Read ClientID, ClientSecret, TenantDomain and TenantId from a .env file
+# within the same folder
+$Config = gc .\Get-O365ActivityLogs.env | ConvertFrom-JSON
+$ClientID       = $Config.ClientId
+$ClientSecret   = $Config.ClientSecret
+$tenantdomain   = $Config.TenantDomain
+$tenantId       = $Config.TenantId
 
 # Retrieve the access token. Check to make sure the script was able to retrieve.
 # If so, construct the headerparameters for subsequent calls
