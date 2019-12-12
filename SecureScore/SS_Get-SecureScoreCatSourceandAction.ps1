@@ -26,11 +26,11 @@ at http://www.microsoft.com/info/cpyright.htm.
 #>
 
 # This script will require the Web Application and permissions setup in Azure Active Directory
-$Config = gc .\AAD_Get-RiskEvents.env | ConvertFrom-JSON
+$Config = gc .\SS_Get-SecureScoreCatSourceandAction.env | ConvertFrom-JSON
 $ClientID       = $Config.ClientId
 $ClientSecret   = $Config.ClientSecret
 $tenantdomain   = $Config.TenantDomain
-$tenantDomain       = $Config.TenantDomain
+$tenantDomain   = $Config.TenantDomain
 $loginURL       = "https://login.microsoftonline.com/"
 
 # $daterange
@@ -44,7 +44,7 @@ Write-Output $oauth
 if ($oauth.access_token -ne $null) {
     $headerParams = @{'Authorization'="$($oauth.token_type) $($oauth.access_token)"}
 
-    $url = "https://graph.microsoft.com/beta/identityRiskEvents"
+    $url = "https://graph.microsoft.com/beta/security/secureScores"
     Write-Output $url
 
     $myReport = (Invoke-WebRequest -UseBasicParsing -Headers $headerParams -Uri $url)
