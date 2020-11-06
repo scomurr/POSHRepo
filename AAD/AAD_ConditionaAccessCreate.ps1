@@ -54,6 +54,7 @@ $teamsGUID = "cc15fd57-2c6c-4117-a88c-83b1d56b4bbe"
 $exoGUID = "00000002-0000-0ff1-ce00-000000000000"
 $spoGUID = "00000003-0000-0ff1-ce00-000000000000"
 $o365GUID = "Office365"  # Had to retrieve this one by creating a policy with it configured as criteria
+$plannerGUID = "09abbdfd-ed23-44ee-a2d9-a627aa1c90f3"
 # All Apps = "All" - will just use "All" rather than creating a var
 
 # used Get-AzureADUser to get these GUIDs
@@ -62,12 +63,14 @@ $tc2UserGUID = "3dc7631e-6954-4bc0-b786-f06bfb16a64b"
 $tc3UserGUID = "cf6850a3-bab3-4c51-ad6c-03d0b5e145b5"
 $tc4UserGUID = "a281bdb8-5dd3-425d-967e-b9ff149d7e09"
 $tc5UserGUID = "b65f688a-6e08-4129-9a50-ed364f7df1ca"
+<# never used 
 $tc6UserGUID = "c6346ab4-989c-483f-8a7d-0eb162557445"
 $tc7UserGUID = "33784c01-4829-40fd-8b02-294bd99bd497"
 $tc8UserGUID = "42ad1da1-8193-4451-8930-edfd4ee708e4"
 $tc9UserGUID = "b5302bf5-ffad-46a6-b990-fc0624b1236c"
 $tc10UserGUID = "44d39bba-5c15-4878-b3ca-22f028e7644b"
 $tc11UserGUID = "476310f6-f69a-4c79-9899-ca72174c4ce4"
+#>
 
 #### TC 1
 $CAName = "TC1"
@@ -162,4 +165,30 @@ New-AzureADMSConditionalAccessPolicy -DisplayName $CAName `
 # validate config and then update to enabled
 Get-AzureADMSConditionalAccessPolicy | ?{$_.DisplayName -match 'TC'} | %{set-AzureADMSConditionalAccessPolicy -State "enabled" -PolicyId $_.id}
 
+# Adding planner in as an include Criteria
+<# This use case is incorrect - adding planner to the include simply removes All from the condition and makes planner the only blocked app
+# !!!! Retaining for the purposes of keeping it as an example as to how to add an additional app to the criteria
+
+$policies = Get-AzureADMSConditionalAccessPolicy | ?{$_.DisplayName -match 'TC'}
+# TC 1
+$tc1PolicyId = ($policies | ?{$_.DisplayName -eq 'TC1'}).Id
+$tc1PolicyConditions = ($policies | ?{$_.DisplayName -eq 'TC1'}).conditions
+$tc1PolicyControls = ($policies | ?{$_.DisplayName -eq 'TC1'}).GrantControls
+$tc1PolicyConditions.Applications.IncludeApplications += $plannerGUID
+Set-AzureADMSConditionalAccessPolicy -PolicyId $tc1PolicyId -Conditions $tc1PolicyConditions -GrantControls $tc1PolicyControls
+#>
+
+# THe intent here is to usurp the exclusion of O365 from TC5 and block planner
+$CAName = "TC Additional - Planner Explicit Block"  <# change here #>
+$conditions = New-Object -TypeName Microsoft.Open.MSGraph.Model.ConditionalAccessConditionSet
+$conditions.Applications = New-Object -TypeName Microsoft.Open.MSGraph.Model.ConditionalAccessApplicationCondition
+$conditions.Users = New-Object -TypeName Microsoft.Open.MSGraph.Model.ConditionalAccessUserCondition
+$controls = New-Object -TypeName Microsoft.Open.MSGraph.Model.ConditionalAccessGrantControls
+$conditions.Applications.IncludeApplications = @($plannerGUID) <# change here #>
+$conditions.Users.IncludeUsers = @($tc5UserGUID) <# change here #>
+$controls._Operator = "OR"
+$controls.BuiltInControls = "Block"
+
+New-AzureADMSConditionalAccessPolicy -DisplayName $CAName `
+   -State "enabled" -Conditions $conditions -GrantControls $controls
 
